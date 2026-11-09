@@ -9,7 +9,7 @@ import (
 
 // Implementation of envelope encryption
 
-// Interface to wrap any kind of KMS, including local. For now we will go with local
+// Interface to wrap any kind of KMS, including local. For now we will go with local only, in the future we might consider giving options to store in user's own KMS for more control
 type KeyEncryptionWrapper interface {
     EncryptKey(ctx context.Context, keyPlain []byte) ([]byte, error)
     DecryptKey(ctx context.Context, keyCipher []byte) ([]byte, error)
