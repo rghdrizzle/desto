@@ -11,6 +11,7 @@ import (
 )
 
 func SendFile(size int) error {
+	
 	file := make([]byte, size)
 	_, err := io.ReadFull(rand.Reader, file)
 	if err != nil {
