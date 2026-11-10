@@ -107,26 +107,26 @@ func (e *Enveloped) Encrypt(ctx context.Context, data []byte) (string, error){
 
 }
 
-func (e *Enveloped) Decrypt(ctx context.Context, encryptedData string) ([]byte, error){
+func (e *Enveloped) Decrypt(ctx context.Context, cipherData string) ([]byte, error){
     var err error
-    partsDot := strings.SplitN(encryptedData, ".", 2) // this is based on the format we created during Encrypt which splits the string into 2 parts with dot being the delimitter
+    partsDot := strings.SplitN(cipherData, ".", 2) // this is based on the format we created during Encrypt which splits the string into 2 parts with dot being the delimitter
     if len(partsDot) != 2 {
         return nil, fmt.Errorf("invalid cipher data blob")
     }
-    dekCipher, _:= base64.StdEncoding.DecodeString(partsDot[0])
-    dataCipher,_:= base64.StdEncoding.DecodeString(partsDot[1])
-    if dekCipher == nil || dataCipher == nil {
+    encryptedDek, _:= base64.StdEncoding.DecodeString(partsDot[0])
+    encryptedData,_:= base64.StdEncoding.DecodeString(partsDot[1])
+    if encryptedDek == nil || encryptedData == nil {
         return nil, fmt.Errorf("invalid cipher data blob")
     }
 
-    dekKey, err := e.kms.DecryptKey(ctx, dekCipher) // decrypt the key using KEK
+    dekKey, err := e.kms.DecryptKey(ctx, encryptedDek) // decrypt the key using KEK
     if err != nil {
         return nil, fmt.Errorf("could not decrypt DEK: %w", err)
     }
 
     plainData, err := DecryptDataWithDEK(
         dekKey,
-        dataCipher,
+        encryptedData,
     )
     if err != nil {
         return nil, fmt.Errorf("could not decrypt data with dek, data could be corrupted: %w", err)
