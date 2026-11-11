@@ -1,4 +1,23 @@
 
+<p align="center">
+  DESTO
+</p>
+
+<p align="center">
+  <img src="https://github.com/rghdrizzle/desto/blob/main/pixil-frame-0(5).png" alt="desto logo" width="220">
+</p>
+
+<p align="center">
+  <strong>Decentralized storage. User-owned data. Peer-to-peer payments.</strong>
+</p>
+
+<p align="center">
+  An open-source decentralized storage project built around <a href="https://github.com/nostr-protocol">Nostr</a> and <a href="https://cashu.space/">Cashu</a>.
+</p>
+
+⚠️ Work in Progress
+
+desto is in active development. The encryption layer and initial storage-node implementation are being developed. Nostr integration, Cashu payments, and distributed storage are planned. APIs and architecture may change.
 
 Status:
 - multi layaer encryption of data - Check
