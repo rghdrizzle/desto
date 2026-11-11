@@ -1,11 +1,13 @@
 package encryption
 
 import (
-	"crypto/rand"
-    "encoding/base64"
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
-    "strings"
+	"log"
+	"strings"
+
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
@@ -22,7 +24,7 @@ type Enveloped struct {
 }
 
 type LocalKMS struct{
-    key []byte
+    Key []byte
 }
 
 func NewEnveloped(kms KeyEncryptionWrapper) *Enveloped {
@@ -44,7 +46,7 @@ func GenerateNewKey()[]byte{
     return b    
 }
 
-func DecryptDataWithDEK(encryptedData []byte,key []byte)([]byte,error){
+func DecryptDataWithDEK(key []byte,encryptedData []byte)([]byte,error){
     aead, err := chacha20poly1305.NewX(key)
     if err != nil {
         return nil, fmt.Errorf("failed to create encryption AEAD: %w", err)
@@ -109,12 +111,18 @@ func (e *Enveloped) Encrypt(ctx context.Context, data []byte) (string, error){
 
 func (e *Enveloped) Decrypt(ctx context.Context, cipherData string) ([]byte, error){
     var err error
-    partsDot := strings.SplitN(cipherData, ".", 2) // this is based on the format we created during Encrypt which splits the string into 2 parts with dot being the delimitter
+    partsDot := strings.SplitN(cipherData, ".", 3) // this is based on the format we created during Encrypt which splits the string into 2 parts with dot being the delimitter
     if len(partsDot) != 2 {
         return nil, fmt.Errorf("invalid cipher data blob")
     }
-    encryptedDek, _:= base64.StdEncoding.DecodeString(partsDot[0])
-    encryptedData,_:= base64.StdEncoding.DecodeString(partsDot[1])
+    encryptedDek, err:= base64.StdEncoding.DecodeString(partsDot[0])
+    if err!=nil{
+        log.Fatal("error in decoding dek")
+    }
+    encryptedData,err:= base64.StdEncoding.DecodeString(partsDot[1])
+    if err!=nil{
+        log.Fatal("error in decoding data")
+    }
     if encryptedDek == nil || encryptedData == nil {
         return nil, fmt.Errorf("invalid cipher data blob")
     }
@@ -123,7 +131,6 @@ func (e *Enveloped) Decrypt(ctx context.Context, cipherData string) ([]byte, err
     if err != nil {
         return nil, fmt.Errorf("could not decrypt DEK: %w", err)
     }
-
     plainData, err := DecryptDataWithDEK(
         dekKey,
         encryptedData,
@@ -131,10 +138,46 @@ func (e *Enveloped) Decrypt(ctx context.Context, cipherData string) ([]byte, err
     if err != nil {
         return nil, fmt.Errorf("could not decrypt data with dek, data could be corrupted: %w", err)
     }
-
     return plainData, nil
 }
 
-func (l *LocalKMS) Encrypt(ctx context.Context, keyPlain []byte) ([]byte, error){
+func (l *LocalKMS) EncryptKey(ctx context.Context, keyPlain []byte) ([]byte, error){
     // Encrypt DEK with KEK
+
+    aead, err := chacha20poly1305.NewX(l.Key)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create encryption AEAD: %w", err)
+    }
+
+    // Select a random nonce, and leave capacity for the ciphertext.
+    nonce := make([]byte, aead.NonceSize(), aead.NonceSize()+len(keyPlain)+aead.Overhead())
+    if _, err := rand.Read(nonce); err != nil {
+        return nil, fmt.Errorf("failed to encrypt: %w", err)
+    }
+    // Encrypt the key and append the ciphertext to the nonce.
+    encryptedKey := aead.Seal(nonce, nonce, keyPlain, nil)
+
+    return encryptedKey, nil
+
 }
+
+func (l *LocalKMS) DecryptKey(ctx context.Context, keyCipher []byte) ([]byte, error){
+    aead, err := chacha20poly1305.NewX(l.Key)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create encryption AEAD: %w", err)
+    }
+    if len(keyCipher) < aead.NonceSize() {
+        return nil, fmt.Errorf("ciphertext is too short: %d < %d", len(keyCipher), aead.NonceSize())
+    }
+
+    // Split nonce and ciphertext.
+    nonce, ciphertext := keyCipher[:aead.NonceSize()], keyCipher[aead.NonceSize():]
+
+    // Decrypt the key and check it wasn't tampered with.
+    dek, err := aead.Open(nil, nonce, ciphertext, nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to decrypt: %w", err)
+    }
+    return dek, nil
+}
+
