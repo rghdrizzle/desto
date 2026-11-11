@@ -41,3 +41,9 @@ func SendFile(size int) error {
 	fmt.Println("decrypted data:",decryptedData)
 	return nil
 }
+
+func receiveFile() error{
+	
+	
+	return nil
+}
