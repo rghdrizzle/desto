@@ -27,4 +27,11 @@ Status:
 - Implement storage schedule in client side - To Do
 - Implement Key lifecycle management in client side - To Do
 - Implement file replication across nodes - To Do
-- Implement file chuncking and storing in multiple nodes ( Planning needs to be done ) - To Do
+- Implement file chuncking and storing in multiple nodes ( Planning needs to be done: Look at erasure coding and reed solomon ) - To Do
+- Implement merkle tree for verification - To Do ( Not confirmed )
+- Node failure recovery - To Do
+- Data persistance ( Planning needs to be done ) - To Do
+- Penalties ( Planning needs to be done but this is related to Data persistance ) - To Do
+- Proof of storage verification ( Not confirmed and more planning needs to be done; refer to filecoin for more info) - To Do
+- Look into IPFS to make things easier perhaps ( Like Kubo )
+- 
