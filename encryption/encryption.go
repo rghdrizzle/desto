@@ -111,7 +111,7 @@ func (e *Enveloped) Encrypt(ctx context.Context, data []byte) (string, error){
 
 func (e *Enveloped) Decrypt(ctx context.Context, cipherData string) ([]byte, error){
     var err error
-    partsDot := strings.SplitN(cipherData, ".", 3) // this is based on the format we created during Encrypt which splits the string into 2 parts with dot being the delimitter
+    partsDot := strings.SplitN(cipherData, ".", 2) // this is based on the format we created during Encrypt which splits the string into 2 parts with dot being the delimitter
     if len(partsDot) != 2 {
         return nil, fmt.Errorf("invalid cipher data blob")
     }
@@ -121,7 +121,7 @@ func (e *Enveloped) Decrypt(ctx context.Context, cipherData string) ([]byte, err
     }
     encryptedData,err:= base64.StdEncoding.DecodeString(partsDot[1])
     if err!=nil{
-        log.Fatal("error in decoding data")
+        log.Fatal("\n error in decoding data",err)
     }
     if encryptedDek == nil || encryptedData == nil {
         return nil, fmt.Errorf("invalid cipher data blob")
