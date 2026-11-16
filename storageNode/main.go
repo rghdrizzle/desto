@@ -16,7 +16,7 @@ type Server struct {
 
 type ShardStore interface{
 	Put(ctx context.Context, data io.Reader, size int64)(string,error)
-	// Get(ctx context.Context, cid string, size int64) ([]byte,error)
+	Get(ctx context.Context, cid string) ([]byte,error)
 	// Pin(ctx context.Context, cid string) error
 }
 
@@ -64,3 +64,4 @@ func (s *Server) readLoop(conn net.Conn) error {
 	}
 
 }
+
