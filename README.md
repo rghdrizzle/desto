@@ -185,6 +185,7 @@ The client verifies shard integrity before reconstruction through the reed solom
 - [x] Envelope encryption with separate data-encryption and key-encryption keys.
 - [x] Initial TCP-based storage-node implementation.
 - [x] Reed–Solomon erasure-coding implementation.
+- [ ] Refactor communication between client and node by using gRPC.
 - [ ] Refine client upload and retrieval workflows.
 - [ ] Implement file manifest and shard metadata management.
 - [ ] Integrate Kubo as the storage backend.

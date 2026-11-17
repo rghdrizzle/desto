@@ -1,0 +1,17 @@
+syntax = "proto3";
+option go_package = "rghdrizzle/transport";
+service desto{
+    rpc SendFile(file) returns (cid){}
+    rpc RetrieveFile(cid) returns(file) {}
+}
+
+message file{
+    bytes data =1;
+    int64 size =2;
+    int64 index =3;
+}
+
+message cid{
+    string cid =1;
+}
+

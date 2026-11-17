@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"context"
 	//"crypto/rand"
-	"encoding/binary"
+	//"encoding/binary"
 	"fmt"
-	"io"
+	//"io"
 	"os"
 	"log"
-	"net"
+	//"net"
 	"rghdrizzle/desto/encryption"
+	transport "rghdrizzle/desto/transport"
+	"google.golang.org/grpc"
 	"github.com/klauspost/reedsolomon"
 )
 var KEK string = "asdasdasdasdasdasdasw123dfhuilmn" // placeholder, will create generate KEK once at initial setup for the client and store it in the device key system
@@ -28,10 +30,19 @@ func SendFile(size int) error {
 	// 	log.Fatal(err)
 	// }
 	enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
-	conn, err := net.Dial("tcp", ":3001")
+	// grpc
+	conn1, err := grpc.NewClient("localhost:3002", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("did not connect: %v", err)
 	}
+	log.Printf("client active listening at %d\n", 3002)
+	defer conn1.Close()
+	c := transport.NewDestoClient(conn1)
+
+	// conn, err := net.Dial("tcp", ":3001")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 	encryptedData , err := enveloped.Encrypt(context.Background(),file)
 	sizeOfEncryptedData := len(encryptedData) // TODO: should send to the server when sending the file since we need it for decoding the shards and decryption
 	if err!=nil{
@@ -42,20 +53,22 @@ func SendFile(size int) error {
 	erasureEncoder:= &ErasureEncoder{dataShards: 4,parityShards: 2}
 	shards ,err := erasureEncoder.erasureEncoding(encryptedData)
 	for i, shard := range shards{
-		// we need index for consistent reconstruction during decoding
-		if err := binary.Write(conn, binary.LittleEndian, uint32(i)); err != nil {
-            return err
-        }
-        // Send shard size.
-        if err := binary.Write(conn, binary.LittleEndian, uint64(len(shard))); err != nil {
-            return err
-        }
-        n, err := io.CopyN(conn, bytes.NewReader(shard),int64(len(shard)))
-		if err != nil {
-            return err
-        }
-		fmt.Println("Written bytes:", n)
-	} 
+		cid,err := c.SendFile(context.Background(),&transport.File{Data: shard,Size: int64(len(shard)),Index: int64(i)})
+		checkErr(err)
+		// // we need index for consistent reconstruction during decoding
+		// if err := binary.Write(conn, binary.LittleEndian, uint32(i)); err != nil {
+        //     return err
+        // }
+        // // Send shard size.
+        // if err := binary.Write(conn, binary.LittleEndian, uint64(len(shard))); err != nil {
+        //     return err
+        // }
+        // n, err := io.CopyN(conn, bytes.NewReader(shard),int64(len(shard)))
+		// if err != nil {
+        //     return err
+        // }
+		fmt.Println("cid returned:", cid.Cid)
+	}  
 	
 	// testing with data from here since I did not implement recieving data from the server yet, so we will use the shards data from this function itself for verification of business logic
 	placeholderDATAShardsFromServer := shards
