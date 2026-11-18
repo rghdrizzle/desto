@@ -48,5 +48,9 @@ func GetHashFromFileForFilename(key string) string {
 }
 
 func (f *FileStore) Get(ctx context.Context, cid string) ([]byte, error) {
-	return os.ReadFile(cid)
+
+	filename := cid
+	storeDir := filepath.Join(os.TempDir(), "desto-shards")
+	path := filepath.Join(storeDir, filename)
+	return os.ReadFile(path)
 }

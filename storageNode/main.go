@@ -65,6 +65,15 @@ func (s *Server) SendFile(context context.Context, file *transport.File) (*trans
 	return &transport.Cid{Cid: cid},nil
 }
 
+func (s *Server) RetrieveFile(context context.Context,  cid *transport.Cid) (*transport.File,error){
+	fmt.Println("Fetching shard for retreival")
+	data,err := s.store.Get(context,cid.Cid)
+	if err!=nil{
+		fmt.Println("Error fetching data from store:",err)	
+	}
+	return &transport.File{Data: data},nil
+}
+
 func (s *Server) readLoop(conn net.Conn) error {
 	buf := new(bytes.Buffer)
 	fmt.Println("Reading data")
