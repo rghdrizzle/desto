@@ -27,10 +27,6 @@ type ErasureEncoder struct {
 func SendFile(size int) error {
 
 	file := []byte("YEA THIS WORKS!!!asdadasd") //make([]byte, size)
-	// _, err := io.ReadFull(rand.Reader, file)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 	enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
 	// grpc
 	conn1, err := grpc.NewClient("localhost:3002", grpc.WithInsecure(), grpc.WithBlock())
@@ -40,11 +36,6 @@ func SendFile(size int) error {
 	log.Printf("client active listening at %d\n", 3002)
 	defer conn1.Close()
 	c := transport.NewDestoClient(conn1)
-
-	// conn, err := net.Dial("tcp", ":3001")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 	encryptedData, err := enveloped.Encrypt(context.Background(), file)
 	sizeOfEncryptedData := len(encryptedData) // TODO: should send to the server when sending the file since we need it for decoding the shards and decryption
 	if err != nil {
@@ -57,18 +48,6 @@ func SendFile(size int) error {
 	for i, shard := range shards {
 		cid, err := c.SendFile(context.Background(), &transport.File{Data: shard, Size: int64(len(shard)), Index: int64(i)})
 		checkErr(err)
-		// // we need index for consistent reconstruction during decoding
-		// if err := binary.Write(conn, binary.LittleEndian, uint32(i)); err != nil {
-		//     return err
-		// }
-		// // Send shard size.
-		// if err := binary.Write(conn, binary.LittleEndian, uint64(len(shard))); err != nil {
-		//     return err
-		// }
-		// n, err := io.CopyN(conn, bytes.NewReader(shard),int64(len(shard)))
-		// if err != nil {
-		//     return err
-		// }
 		fmt.Println("cid returned:", cid.Cid)
 	}
 
