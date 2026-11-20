@@ -1,0 +1,51 @@
+package metadata
+
+import (
+	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	types "rghdrizzle/desto/types"
+)
+type LocalStore struct{
+
+}
+func (l *LocalStore) StoreFileMetaData(ctx context.Context, file *types.FileMetadata) (string, error){
+	storeDir := getStoreDir()
+	fileName := file.FileID
+	path := filepath.Join(storeDir,fileName)
+	b , err := json.Marshal(file)
+	if err!=nil{
+		return "",err
+	}
+	if err := os.WriteFile(path, b, 0o600); err != nil {
+		return "", err
+	}
+
+	return path,nil
+}
+
+func (l *LocalStore) GetFileMetaData(ctx context.Context, fileid string) (*types.FileMetadata, error){
+
+	fileMetadata := &types.FileMetadata{}
+	storeDir := getStoreDir()
+	path := filepath.Join(storeDir, fileid)
+	jsonBytes, err:= os.ReadFile(path)
+	if err!=nil{
+		return nil,err
+	}
+	err = json.Unmarshal(jsonBytes,&fileMetadata)
+	if err!=nil{
+		return nil,err
+	}
+	
+	return fileMetadata,nil
+}
+
+func getStoreDir() string{
+	storeDir := filepath.Join(os.TempDir(), "desto-files")
+	if err := os.MkdirAll(storeDir, 0o700); err != nil {
+		return err.Error()
+	}
+	return storeDir
+}

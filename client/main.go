@@ -14,7 +14,13 @@ import (
 	"google.golang.org/grpc"
 	"rghdrizzle/desto/encryption"
 	transport "rghdrizzle/desto/transport"
+	types "rghdrizzle/desto/types"
 )
+
+type FileMetaDataStore interface {
+	StoreFileMetaData(ctx context.Context, file types.FileMetadata) (string, error)
+	GetFileMetaData(ctx context.Context, fileid string) (types.FileMetadata, error)
+}
 
 var KEK string = "asdasdasdasdasdasdasw123dfhuilmn" // placeholder, will create generate KEK once at initial setup for the client and store it in the device key system
 
