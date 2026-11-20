@@ -14,7 +14,7 @@ func main(){
 		client.SendFile(200)
 		//os.Exit(0)
 		time.Sleep(4*time.Second)
-		client.ReceiveFile("d229b30813f079bb42afc5e73e9d4d85cf0a3cb9")
+		client.ReceiveFile("d6b7607f-bd31-4ac0-8ea4-75abe33acd0f")
 	}()
 	fmt.Println("server started")
 	server := sn.NewServer()

@@ -3,23 +3,28 @@ package client
 import (
 	"bytes"
 	"context"
+	"time"
+
 	//"crypto/rand"
 	//"encoding/binary"
 	"fmt"
 	//"io"
 	"log"
 	"os"
+
 	//"net"
-	"github.com/klauspost/reedsolomon"
-	"google.golang.org/grpc"
+	metadata "rghdrizzle/desto/client/metadata"
 	"rghdrizzle/desto/encryption"
 	transport "rghdrizzle/desto/transport"
 	types "rghdrizzle/desto/types"
+	"github.com/google/uuid"
+	"github.com/klauspost/reedsolomon"
+	"google.golang.org/grpc"
 )
 
 type FileMetaDataStore interface {
-	StoreFileMetaData(ctx context.Context, file types.FileMetadata) (string, error)
-	GetFileMetaData(ctx context.Context, fileid string) (types.FileMetadata, error)
+	StoreFileMetaData( file types.FileMetadata) (string, error)
+	GetFileMetaData( fileid string) (types.FileMetadata, error)
 }
 
 var KEK string = "asdasdasdasdasdasdasw123dfhuilmn" // placeholder, will create generate KEK once at initial setup for the client and store it in the device key system
@@ -29,9 +34,11 @@ type ErasureEncoder struct {
 	parityShards int
 }
 
+var store *metadata.LocalStore = &metadata.LocalStore{}
+
 // TODO: Refactor code to make sure to handle fetch files from the server and manage verification of data after retrieval
 func SendFile(size int) error {
-
+	fileMetadata := &types.FileMetadata{Shards: []types.ShardMetadata{}}
 	file := []byte("YEA THIS WORKS!!!asdadasd") //make([]byte, size)
 	enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
 	// grpc
@@ -54,23 +61,33 @@ func SendFile(size int) error {
 	for i, shard := range shards {
 		cid, err := c.SendFile(context.Background(), &transport.File{Data: shard, Size: int64(len(shard)), Index: int64(i)})
 		checkErr(err)
+		fileMetadata.Shards = append(fileMetadata.Shards,types.ShardMetadata{CID: cid.Cid,Index: i})
 		fmt.Println("cid returned:", cid.Cid)
 	}
-
-	// testing with data from here since I did not implement recieving data from the server yet, so we will use the shards data from this function itself for verification of business logic
-	placeholderDATAShardsFromServer := shards
-	dataFromShard, err := erasureEncoder.erasureDecoding(placeholderDATAShardsFromServer, sizeOfEncryptedData) // replace size with size from the server
+	fileMetadata.CreatedAt = time.Now()
+	fileMetadata.FileID = uuid.NewString()
+	fileMetadata.Name = "Test"
+	fileMetadata.Size = int64(sizeOfEncryptedData)
+	// create metadata file
+	path , err := store.StoreFileMetaData(fileMetadata)
 	checkErr(err)
-	// TODO: fix the bug related to mismatch in size since we do not know the actual file size when decoding which is important when it comes to joining the shard
-	decryptedData, err := enveloped.Decrypt(context.Background(), dataFromShard)
-	fmt.Printf("Decrypted bytes: %v\n", string(decryptedData))
+	fmt.Println("Metadata path:",path)
+
+	// // testing with data from here since I did not implement recieving data from the server yet, so we will use the shards data from this function itself for verification of business logic
+	// placeholderDATAShardsFromServer := shards
+	// dataFromShard, err := erasureEncoder.erasureDecoding(placeholderDATAShardsFromServer, sizeOfEncryptedData) // replace size with size from the server
+	// checkErr(err)
+	// // TODO: fix the bug related to mismatch in size since we do not know the actual file size when decoding which is important when it comes to joining the shard
+	// decryptedData, err := enveloped.Decrypt(context.Background(), dataFromShard)
+	// fmt.Printf("Decrypted bytes: %v\n", string(decryptedData))
 	return nil
 }
 
-func ReceiveFile(cid string) error {
+func ReceiveFile(fileid string) error {
 	// TODO: fetch details from the manifest like file size, number of shards, shard index and so on
 
-	//enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
+	enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
+	erasureEncoder := &ErasureEncoder{dataShards: 4, parityShards: 2}
 
 	// grpc
 	conn1, err := grpc.NewClient("localhost:3002", grpc.WithInsecure(), grpc.WithBlock())
@@ -80,12 +97,21 @@ func ReceiveFile(cid string) error {
 	log.Printf("client active listening at %d\n", 3002)
 	defer conn1.Close()
 	c := transport.NewDestoClient(conn1)
-	// sizeOfEncryptedData := 47 // TODO: fetch it from the manifest file instead
-	// noOfShards := 4           // hardcoded for now
-	file, err := c.RetrieveFile(context.Background(), &transport.Cid{Cid: cid})
+	fileMetadata ,err:= store.GetFileMetaData(fileid)
 	checkErr(err)
-	fmt.Println("shard length retrieved", len(file.Data))
+	shards := [][]byte{}
+	for _ ,shard:= range fileMetadata.Shards{
+		shard, err := c.RetrieveFile(context.Background(), &transport.Cid{Cid: shard.CID})
+		checkErr(err)
+		shards = append(shards,shard.Data)
+	}
 
+	fmt.Println("shards length retrieved", len(shards))
+	dataFromShard, err := erasureEncoder.erasureDecoding(shards, int(fileMetadata.Size)) // replace size with size from the server
+	checkErr(err)
+	// TODO: fix the bug related to mismatch in size since we do not know the actual file size when decoding which is important when it comes to joining the shard
+	decryptedData, err := enveloped.Decrypt(context.Background(), dataFromShard)
+	fmt.Printf("Decrypted bytes: %v\n", string(decryptedData))
 	return nil
 }
 

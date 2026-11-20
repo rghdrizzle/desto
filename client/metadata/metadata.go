@@ -1,7 +1,7 @@
 package metadata
 
 import (
-	"context"
+	//"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -10,7 +10,7 @@ import (
 type LocalStore struct{
 
 }
-func (l *LocalStore) StoreFileMetaData(ctx context.Context, file *types.FileMetadata) (string, error){
+func (l *LocalStore) StoreFileMetaData( file *types.FileMetadata) (string, error){
 	storeDir := getStoreDir()
 	fileName := file.FileID
 	path := filepath.Join(storeDir,fileName)
@@ -25,7 +25,7 @@ func (l *LocalStore) StoreFileMetaData(ctx context.Context, file *types.FileMeta
 	return path,nil
 }
 
-func (l *LocalStore) GetFileMetaData(ctx context.Context, fileid string) (*types.FileMetadata, error){
+func (l *LocalStore) GetFileMetaData( fileid string) (*types.FileMetadata, error){
 
 	fileMetadata := &types.FileMetadata{}
 	storeDir := getStoreDir()
