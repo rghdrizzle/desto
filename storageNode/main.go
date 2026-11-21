@@ -28,7 +28,7 @@ func NewServer() *Server {
 	return &Server{store: &FileStore{}}
 }
 
-func (s *Server) Start() {
+func (s *Server) Start(ready chan struct{}) {
 	ln, err := net.Listen("tcp", ":3002")
 	if err != nil {
 		log.Fatal(err)
@@ -36,10 +36,10 @@ func (s *Server) Start() {
 	server := grpc.NewServer()
 	transport.RegisterDestoServer(server, s)
 	fmt.Println("Registered grpc server")
+	close(ready)
 	if err := server.Serve(ln); err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func (s *Server) SendFile(context context.Context, file *transport.File) (*transport.Cid, error) {

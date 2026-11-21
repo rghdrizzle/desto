@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	types "rghdrizzle/desto/types"
+	"fmt"
 )
 type LocalStore struct{
 
@@ -43,7 +44,11 @@ func (l *LocalStore) GetFileMetaData( fileid string) (*types.FileMetadata, error
 }
 
 func getStoreDir() string{
-	storeDir := filepath.Join(os.TempDir(), "desto-files")
+	home, err :=os.UserHomeDir()
+	if err!=nil{
+		fmt.Println("error finding home dir:",err)
+	}
+	storeDir := filepath.Join(home, "desto-files")
 	if err := os.MkdirAll(storeDir, 0o700); err != nil {
 		return err.Error()
 	}

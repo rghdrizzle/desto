@@ -53,7 +53,11 @@ func (f *FileStore) Get(ctx context.Context, cid string) ([]byte, error) {
 }
 
 func getStoreDir() string{
-	storeDir := filepath.Join(os.TempDir(), "desto-shards")
+	home, err :=os.UserHomeDir()
+	if err!=nil{
+		fmt.Println("error finding home dir:",err)
+	}
+	storeDir := filepath.Join(home, "desto-shards")
 	if err := os.MkdirAll(storeDir, 0o700); err != nil {
 		return err.Error()
 	}

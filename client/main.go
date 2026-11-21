@@ -37,9 +37,9 @@ type ErasureEncoder struct {
 var store *metadata.LocalStore = &metadata.LocalStore{}
 
 // TODO: Refactor code to make sure to handle fetch files from the server and manage verification of data after retrieval
-func SendFile(size int) error {
+func SendFile(file []byte) (string, error) {
 	fileMetadata := &types.FileMetadata{Shards: []types.ShardMetadata{}}
-	file := []byte("YEA THIS WORKS!!!asdadasd") //make([]byte, size)
+	//file := []byte("YEA THIS WORKS!!!asdadasd") //make([]byte, size)
 	enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
 	// grpc
 	conn1, err := grpc.NewClient("localhost:3002", grpc.WithInsecure(), grpc.WithBlock())
@@ -80,10 +80,10 @@ func SendFile(size int) error {
 	// // TODO: fix the bug related to mismatch in size since we do not know the actual file size when decoding which is important when it comes to joining the shard
 	// decryptedData, err := enveloped.Decrypt(context.Background(), dataFromShard)
 	// fmt.Printf("Decrypted bytes: %v\n", string(decryptedData))
-	return nil
+	return fileMetadata.FileID,nil
 }
 
-func ReceiveFile(fileid string) error {
+func ReceiveFile(fileid string) ([]byte,error) {
 	// TODO: fetch details from the manifest like file size, number of shards, shard index and so on
 
 	enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
@@ -111,8 +111,8 @@ func ReceiveFile(fileid string) error {
 	checkErr(err)
 	// TODO: fix the bug related to mismatch in size since we do not know the actual file size when decoding which is important when it comes to joining the shard
 	decryptedData, err := enveloped.Decrypt(context.Background(), dataFromShard)
-	fmt.Printf("Decrypted bytes: %v\n", string(decryptedData))
-	return nil
+	//fmt.Printf("Decrypted bytes: %v\n", string(decryptedData))
+	return decryptedData,nil
 }
 
 func (e *ErasureEncoder) erasureEncoding(data string) ([][]byte, error) {
