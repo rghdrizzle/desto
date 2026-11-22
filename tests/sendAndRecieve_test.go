@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 
 	//"os"
 	"rghdrizzle/desto/client"
@@ -27,7 +28,7 @@ func TestSendandReceiveFile(t *testing.T) {
 	for i := range testFiles {
 		file := testFiles[i]
 		fmt.Println("Testing starts: ")
-		fileid, err := client.SendFile(file)
+		fileid, err := client.SendFile(file,("test"+strconv.Itoa((i))))
 		if err != nil {
 			t.Fatal("Error sending file to the server:", err)
 		}

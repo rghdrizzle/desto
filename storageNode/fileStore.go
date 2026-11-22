@@ -32,9 +32,21 @@ func (f *FileStore) Put(ctx context.Context,data io.Reader,size int64) (string, 
 	filename := GetHashFromFileForFilename(buf.String()[:12])
 	storeDir := getStoreDir()
 	path := filepath.Join(storeDir, filename)
-	if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
-		return "", err
+	file , err := os.OpenFile(path,os.O_CREATE|os.O_WRONLY|os.O_TRUNC,0644)
+	if err!=nil{
+		return "",err
 	}
+	defer file.Close()
+	_,err= file.Write(buf.Bytes())
+	if err!=nil{
+		return "",err
+	}
+	if err := file.Sync();err!=nil{
+		return "",err
+	}
+	// if err := os.WriteFile(path, buf.Bytes(), 0o600); err != nil {
+	// 	return "", err
+	// }
 	return filename, nil
 }
 

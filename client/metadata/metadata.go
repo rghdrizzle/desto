@@ -19,9 +19,21 @@ func (l *LocalStore) StoreFileMetaData( file *types.FileMetadata) (string, error
 	if err!=nil{
 		return "",err
 	}
-	if err := os.WriteFile(path, b, 0o600); err != nil {
-		return "", err
+	f , err := os.OpenFile(path,os.O_CREATE|os.O_WRONLY|os.O_TRUNC,0644)
+	if err!=nil{
+		return "",err
 	}
+	defer f.Close()
+	_,err= f.Write(b)
+	if err!=nil{
+		return "",err
+	}
+	if err := f.Sync();err!=nil{
+		return "",err
+	}
+	// if err := os.WriteFile(path, b, 0o600); err != nil {
+	// 	return "", err
+	// }
 
 	return path,nil
 }

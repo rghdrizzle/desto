@@ -37,7 +37,7 @@ type ErasureEncoder struct {
 var store *metadata.LocalStore = &metadata.LocalStore{}
 
 // TODO: Refactor code to make sure to handle fetch files from the server and manage verification of data after retrieval
-func SendFile(file []byte) (string, error) {
+func SendFile(file []byte,filename string) (string, error) {
 	fileMetadata := &types.FileMetadata{Shards: []types.ShardMetadata{}}
 	//file := []byte("YEA THIS WORKS!!!asdadasd") //make([]byte, size)
 	enveloped := encryption.NewEnveloped(&encryption.LocalKMS{Key: []byte(KEK)})
@@ -66,7 +66,7 @@ func SendFile(file []byte) (string, error) {
 	}
 	fileMetadata.CreatedAt = time.Now()
 	fileMetadata.FileID = uuid.NewString()
-	fileMetadata.Name = "Test"
+	fileMetadata.Name = filename
 	fileMetadata.Size = int64(sizeOfEncryptedData)
 	// create metadata file
 	path , err := store.StoreFileMetaData(fileMetadata)

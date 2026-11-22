@@ -228,6 +228,7 @@ Some areas are still being explored and are not yet finalized:
 - **Key management:** How users can securely persist and recover encryption keys.
 - **Decentralized coordination:** How to use Nostr without making relays a single point of failure.
 - **Storage integrity:** Evaluating Merkle trees and other verification mechanisms for making sure the provider stores the data with integrity.
+- **General payment based on data size and the number of days being stored**
 
 ## Project Goals
 

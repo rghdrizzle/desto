@@ -69,7 +69,7 @@ func (s *Server) RetrieveFile(context context.Context,  cid *transport.Cid) (*tr
 	fmt.Println("Fetching shard for retreival")
 	data,err := s.store.Get(context,cid.Cid)
 	if err!=nil{
-		fmt.Println("Error fetching data from store:",err)	
+		fmt.Println("Error fetching shard from store:",err)	
 	}
 	return &transport.File{Data: data},nil
 }
