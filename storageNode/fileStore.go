@@ -30,7 +30,7 @@ func (f *FileStore) Put(ctx context.Context,data io.Reader,size int64) (string, 
 	// return filename,nil
 
 	filename := GetHashFromFileForFilename(buf.String()[:12])
-	storeDir := getStoreDir()
+	storeDir := GetStoreDir("desto-shards")
 	path := filepath.Join(storeDir, filename)
 	file , err := os.OpenFile(path,os.O_CREATE|os.O_WRONLY|os.O_TRUNC,0644)
 	if err!=nil{
@@ -59,17 +59,17 @@ func GetHashFromFileForFilename(key string) string {
 func (f *FileStore) Get(ctx context.Context, cid string) ([]byte, error) {
 
 	filename := cid
-	storeDir := getStoreDir()
+	storeDir := GetStoreDir("desto-shards")
 	path := filepath.Join(storeDir, filename)
 	return os.ReadFile(path)
 }
 
-func getStoreDir() string{
+func GetStoreDir(folder string) string{
 	home, err :=os.UserHomeDir()
 	if err!=nil{
 		fmt.Println("error finding home dir:",err)
 	}
-	storeDir := filepath.Join(home, "desto-shards")
+	storeDir := filepath.Join(home, folder)
 	if err := os.MkdirAll(storeDir, 0o700); err != nil {
 		return err.Error()
 	}

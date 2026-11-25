@@ -21,15 +21,17 @@ type Server struct {
 type ShardStore interface {
 	Put(ctx context.Context, data io.Reader, size int64) (string, error)
 	Get(ctx context.Context, cid string) ([]byte, error)
+	Close() error
 	// Pin(ctx context.Context, cid string) error
 }
 
 func NewServer() *Server {
-	return &Server{store: &FileStore{}}
+	return &Server{store: NewBoxoStore()}
 }
 
 func (s *Server) Start(ready chan struct{}) {
 	ln, err := net.Listen("tcp", ":3002")
+	defer s.store.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
